@@ -4,7 +4,7 @@
 
 # prowlscanner
 
-**Authorized web vulnerability hunter — every finding mapped to the Bugcrowd Vulnerability Rating Taxonomy and scored P1–P4.**
+**Authorized web vulnerability hunter — every finding mapped to the Vulnerability Rating Taxonomy and scored P1–P4, with evidence and a submission-ready writeup.**
 
 [![ci](https://github.com/ProwlSec/prowlscanner/actions/workflows/ci.yml/badge.svg)](https://github.com/ProwlSec/prowlscanner/actions)
 [![python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org)
@@ -148,8 +148,12 @@ The JSON report also contains the **attack surface** (resolved hosts, live servi
 
 Same verification-first module pattern, next up: XXE, blind/time-based SQLi, SSRF with an out-of-band collaborator (for blind cases), authenticated stored XSS, and IDOR with supplied session context. Contributions welcome — a module is one file implementing one `Module`.
 
+## Releasing
+
+Publishing to PyPI is automated. Configure a [trusted publisher](https://docs.pypi.org/trusted-publishers/) on PyPI once (project `prowlscanner`, owner `ProwlSec`, workflow `publish.yml`, environment `pypi`), then cut a GitHub Release — the `publish` workflow builds and uploads the wheel. No API tokens to manage.
+
 ## Credits & license
 
-prowlscanner is MIT-licensed. Priorities come from the [Bugcrowd Vulnerability Rating Taxonomy](https://github.com/bugcrowd/vulnerability-rating-taxonomy) (Apache-2.0), bundled in `src/prowlscanner/data/`.
+prowlscanner is MIT-licensed. Severity priorities are derived from the open Vulnerability Rating Taxonomy (VRT) dataset bundled in `src/prowlscanner/data/`, distributed under the Apache-2.0 license (see `src/prowlscanner/data/VRT-LICENSE.md`).
 
 > Use only against systems you are authorized to test. You are responsible for your use of this tool.

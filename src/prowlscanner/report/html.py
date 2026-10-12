@@ -69,5 +69,5 @@ def render_html(report) -> str:
 <div class="sub">{targets} · {generated} · VRT {vrt.release_date()}</div>
 <div class="bar">{stats}</div>
 {blocks}
-<footer>Priorities from the Bugcrowd Vulnerability Rating Taxonomy. Findings are evidence-backed and confidence-scored; verify before reporting.</footer>
+<footer>Priorities from the Vulnerability Rating Taxonomy. Findings are evidence-backed and confidence-scored; verify before reporting.</footer>
 </div></body></html>"""

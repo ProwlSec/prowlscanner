@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "prowlscanner"
 version = "0.1.0"
-description = "Authorized web vulnerability hunter — findings mapped to the Bugcrowd Vulnerability Rating Taxonomy (P1–P4)."
+description = "Authorized web vulnerability hunter — live recon, verification-based scanning, and P1–P4 findings with evidence and submission-ready reports."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"

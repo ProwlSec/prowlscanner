@@ -41,7 +41,7 @@ label.ck{color:#C3C8D1;font-size:12px;display:flex;gap:6px;align-items:center}
 .f .m{color:#8B93A1;font-size:12px}.P1{color:#E26D63}.P2{color:#E39A58}.P3{color:#D9B65A}.P4{color:#6AA9E0}
 </style></head><body><div class="wrap">
 <h1><span class="lg"></span>prowlscanner</h1>
-<div class="sub">authorized web vulnerability hunter · findings mapped to the Bugcrowd VRT</div>
+<div class="sub">authorized web vulnerability hunter · P1–P4 findings with evidence</div>
 <div class="row">
 <input id="t" type="text" placeholder="example.com · *.example.com · https://site · 10.0.0.1 · 10.0.0.0/24">
 <button id="go">Hunt</button>

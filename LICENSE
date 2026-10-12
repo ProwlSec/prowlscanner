@@ -22,6 +22,6 @@ SOFTWARE.
 
 ---
 
-This product bundles the Bugcrowd Vulnerability Rating Taxonomy
+This product bundles a Vulnerability Rating Taxonomy dataset
 (src/prowlscanner/data/vrt.json), which is licensed under the Apache License,
 Version 2.0. See src/prowlscanner/data/VRT-LICENSE.md for the full text.

@@ -166,7 +166,7 @@ def _run_serve(args: argparse.Namespace) -> int:
 def build_scan_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="prowlscanner",
-        description="Authorized web vulnerability hunter — findings mapped to the Bugcrowd VRT (P1–P4).",
+        description="Authorized web vulnerability hunter — live recon, verification-based scanning, P1–P4 findings (VRT).",
         epilog="Run 'prowlscanner serve' to launch the web console.",
     )
     p.add_argument("--version", action="version", version=f"prowlscanner {__version__}")
