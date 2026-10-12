@@ -70,8 +70,15 @@ prowlscanner https://app.example.com/ --html report.html --submissions bugs.txt
 # scope file (in-scope / out-of-scope / not-applicable)
 prowlscanner --scope-file examples/scope.example.json --authorize
 
-# web console (live feed, surface, findings)
+# web console (live feed, surface, graph, findings, connectors)
 prowlscanner serve
+
+# seed targets from your existing tools
+prowlscanner --import proxy-history.xml --authorize      # Burp / Caido export
+prowlscanner --import collection.json --authorize        # Postman collection
+
+# MCP server — drive scans from Claude or any MCP client
+prowlscanner mcp
 ```
 
 Key flags: `--out-of-scope`, `--not-applicable <vrt-id>`, `--bands 1,2,3`, `--depth`, `--max-urls`, `--rate`, `--insecure`, `--json/--html/--sarif/--submissions`.
@@ -100,6 +107,8 @@ Every check maps to a VRT variant; the priority column is read from the bundled 
 | Module | Detects | VRT | Priority |
 | --- | --- | --- | --- |
 | `sqli-error` | Error-based SQL injection | `server_side_injection/sql_injection` | P1 |
+| `sqli-blind` | Blind / time-based SQL injection (differential timing, double-confirmed) | `server_side_injection/sql_injection` | P1 |
+| `xxe` | XML external entity injection (file disclosure) | `server_side_injection/xml_external_entity_injection_xxe` | P1 |
 | `path-traversal` | Local file inclusion / traversal | `server_side_injection/file_inclusion/local` | P1 |
 | `sensitive-exposure` | Exposed `.git` / `.env` / backups with secrets | `sensitive_data_exposure/disclosure_of_secrets/...` | P1 |
 | `secrets` | Secrets in delivered JS/HTML | `sensitive_data_exposure/disclosure_of_secrets/...` | P1 |
@@ -115,6 +124,25 @@ Every check maps to a VRT variant; the priority column is read from the bundled 
 | `clickjacking` | Framable sensitive-action page | `server_security_misconfiguration/clickjacking/sensitive_action` | P4 |
 
 P5 / "varies" conditions (self-XSS, internal-IP disclosure, generic missing headers, …) are **suppressed** by default — that is the whole point of the VRT filter.
+
+## Connectors
+
+prowlscanner plugs into the tools you already use — from the **Connectors** tab in `serve`, or the CLI.
+
+- **Claude / any MCP client (AI-assisted pentesting).** prowlscanner ships an MCP server (`prowlscanner mcp`, stdio) exposing `prowl_scan`, `prowl_vrt` and `prowl_modules`, so Claude (Desktop or Code), Cursor, Cline or any MCP-capable model can run authorized scans and reason over the findings.
+  ```bash
+  # Claude Code
+  claude mcp add prowlscanner -- prowlscanner mcp
+  ```
+  ```jsonc
+  // Claude Desktop / other MCP clients
+  { "mcpServers": { "prowlscanner": { "command": "prowlscanner", "args": ["mcp"] } } }
+  ```
+  Scans still require explicit authorization — the assistant must pass `authorize: true`.
+- **Postman.** Import a collection to seed the scan with its request URLs (`--import collection.json`, or the Connectors tab).
+- **Burp Suite / Caido.** Import a proxy-history export to seed targets (`--import history.xml`). Pick whichever proxy you use.
+
+Because the engine speaks MCP, any other MCP-based tooling can be wired in the same way.
 
 ## Reports
 
@@ -146,7 +174,7 @@ The JSON report also contains the **attack surface** (resolved hosts, live servi
 
 ## Roadmap
 
-Same verification-first module pattern, next up: XXE, blind/time-based SQLi, SSRF with an out-of-band collaborator (for blind cases), authenticated stored XSS, and IDOR with supplied session context. Contributions welcome — a module is one file implementing one `Module`.
+Same verification-first module pattern, next up: SSRF with an out-of-band collaborator (for blind cases), authenticated stored XSS, IDOR with supplied session context, and CORS once a suitable taxonomy entry applies. Contributions welcome — a module is one file implementing one `Module`.
 
 ## Releasing
 

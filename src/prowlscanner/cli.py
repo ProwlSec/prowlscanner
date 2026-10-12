@@ -105,7 +105,8 @@ def _prompt_targets() -> tuple[list[str], list[str], list[str]]:
 
 
 def _run_scan(args: argparse.Namespace) -> int:
-    interactive = not args.targets and not args.scope_file
+    imports = getattr(args, "imports", None)
+    interactive = not args.targets and not args.scope_file and not imports
     extra_oos: list[str] = []
     extra_na: list[str] = []
     targets = list(args.targets)
@@ -117,6 +118,17 @@ def _run_scan(args: argparse.Namespace) -> int:
     config, seed_urls = _build_config(targets, args)
     config.out_of_scope += extra_oos
     config.not_applicable += extra_na
+    if imports:
+        from urllib.parse import urlparse
+        from .connectors import importers
+        for path in imports:
+            kind, urls = importers.load(path)
+            for url in urls:
+                seed_urls.append(url)
+                host = urlparse(url).hostname if "://" in url else url.split("/")[0]
+                if host and host not in config.in_scope:
+                    config.in_scope.append(host)
+            sys.stderr.write(f"  imported {len(urls)} target(s) from {path} ({kind})\n")
     if not config.in_scope:
         sys.stderr.write("No in-scope targets.\n")
         return 1
@@ -172,6 +184,8 @@ def build_scan_parser() -> argparse.ArgumentParser:
     p.add_argument("--version", action="version", version=f"prowlscanner {__version__}")
     p.add_argument("targets", nargs="*", help="domain, *.wildcard, URL, IP, or CIDR (omit to be prompted)")
     p.add_argument("--scope-file", help="JSON scope file")
+    p.add_argument("--import", dest="imports", action="append", metavar="FILE",
+                   help="seed targets from a Postman collection, Burp/Caido export, or URL list (repeatable)")
     p.add_argument("--out-of-scope", action="append", help="exclude host/range (repeatable, comma-ok)")
     p.add_argument("--not-applicable", action="append", help="VRT id/prefix to skip (repeatable, comma-ok)")
     p.add_argument("--bands", help="priority bands, e.g. '1,2,3' (default 1,2,3,4)")
@@ -213,6 +227,9 @@ def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] == "serve":
         return _run_serve(build_serve_parser().parse_args(argv[1:]))
+    if argv and argv[0] == "mcp":
+        from .connectors.mcp import serve_stdio
+        return serve_stdio()
     if argv and argv[0] == "scan":
         argv = argv[1:]
     return _run_scan(build_scan_parser().parse_args(argv))

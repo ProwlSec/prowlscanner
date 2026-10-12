@@ -10,6 +10,7 @@ import base64
 import hashlib
 import hmac
 import json
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -43,6 +44,8 @@ _HOME = f"""<!doctype html><html><head><title>Demo Shop</title>
 <a href="/go?next=/home">continue</a>
 <a href="/account?token=sk_demo_123">account</a>
 <a href="/fetch?url=http://example.com/">preview</a>
+<a href="/report?id=1">report</a>
+<a href="/feed.xml">feed</a>
 <a href="/crash">status</a>
 <a href="/login">login</a>
 <!-- legacy token: {_NONE_JWT} -->
@@ -119,6 +122,13 @@ class Handler(BaseHTTPRequestHandler):
                 self._text("<html><body>Demo Shop</body></html>", "text/html")
             else:
                 self._text(f"fetched {dest}")
+        elif path == "/report":
+            rid = q.get("id", [""])[0].lower()
+            if any(s in rid for s in ("sleep", "pg_sleep", "waitfor")):
+                time.sleep(5)
+            self._html(f"<html><body>Report {q.get('id', [''])[0]}</body></html>")
+        elif path == "/feed.xml":
+            self._text("<?xml version=\"1.0\"?><feed><item>demo</item></feed>", "application/xml")
         elif path == "/crash":
             self._html(f"<html><body>{_TRACEBACK}</body></html>", status=500)
         elif path == "/go":
@@ -133,6 +143,14 @@ class Handler(BaseHTTPRequestHandler):
             self._html(_WP_LOGIN)
         else:
             self._html("<html><body>not found</body></html>", status=404)
+
+    def do_POST(self) -> None:
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        body = self.rfile.read(length).decode("utf-8", "replace") if length else ""
+        if urlparse(self.path).path == "/feed.xml" and "file:///etc/passwd" in body and "SYSTEM" in body:
+            self._text(f"<data>{_PASSWD}</data>", "application/xml")
+        else:
+            self._html("<html><body>ok</body></html>")
 
 
 def main() -> None:

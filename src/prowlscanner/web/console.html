@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Harbor Console · prowlscanner</title>
+<style>
+:root{
+ --bg:#0A0C10;--s0:#0E1117;--s1:#12151B;--s2:#191D25;--s3:#20252F;--bd:#252A34;--bd2:#2E3540;
+ --tx:#E8EAEE;--tx2:#C3C8D1;--mu:#8B93A1;--fa:#5B6472;--ac:#6E9BF5;--ac2:#9FBEFA;--acbg:#16213C;
+ --live:#4FB286;--critical:#E26D63;--high:#E39A58;--medium:#D9B65A;--low:#6AA9E0;--info:#8B93A1;
+ --fd:"Inter",system-ui,sans-serif;--fm:ui-monospace,"SF Mono",Consolas,monospace;--r:9px;color-scheme:dark;
+}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:13.5px/1.5 var(--fd);overflow:hidden}
+button,input{font:inherit;color:inherit}button{cursor:pointer;background:none;border:0}
+.mono{font-family:var(--fm);font-size:12px}.mu{color:var(--mu)}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:6px}
+.app{display:grid;grid-template-columns:248px minmax(0,1fr) 300px;height:100%}
+.rail,.intel{background:var(--s1);display:flex;flex-direction:column;min-height:0;overflow-y:auto}
+.rail{border-right:1px solid var(--bd)}.intel{border-left:1px solid var(--bd)}
+.canvas{display:flex;flex-direction:column;min-width:0;background:var(--s0)}
+.brand{display:flex;gap:9px;align-items:center;font-weight:600;font-size:15px;padding:16px 14px 8px}
+.lg{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--ac),#8E6BE0)}
+.railpad{padding:8px 12px}
+label.ck{display:flex;gap:7px;align-items:center;color:var(--tx2);font-size:12px;margin:8px 2px}
+input[type=text]{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:9px 11px;margin-bottom:7px}
+.btn{display:inline-flex;gap:6px;align-items:center;justify-content:center;width:100%;background:var(--ac);color:#06080C;font-weight:600;border-radius:8px;padding:9px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.navgrp{padding:12px 12px 4px;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fa)}
+.nav{display:flex;align-items:center;gap:9px;width:calc(100% - 16px);padding:7px 11px;border-radius:7px;color:var(--mu);margin:1px 8px}
+.nav svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7}
+.nav:hover{background:var(--s2);color:var(--tx2)}.nav.on{background:var(--acbg);color:var(--tx);box-shadow:inset 2px 0 0 var(--ac)}
+.nav .ct{margin-left:auto;font-size:11px;background:var(--s3);color:var(--mu);border-radius:20px;padding:0 7px}
+.nav.on .ct{background:var(--ac);color:var(--bg)}
+.hd{display:flex;align-items:center;gap:11px;padding:13px 20px;border-bottom:1px solid var(--bd);background:var(--s1)}
+.hd h1{font-size:15px;font-weight:600;margin:0}
+.phases{display:flex;gap:12px;padding:10px 20px;border-bottom:1px solid var(--bd);background:var(--s1)}
+.phase{flex:1}.phase .seg{height:3px;border-radius:2px;background:var(--bd);overflow:hidden;position:relative}
+.phase .seg i{position:absolute;inset:0;background:var(--live);transform:translateX(-100%);transition:transform .4s}
+.phase.on .seg i,.phase.done .seg i{transform:translateX(0)}
+.phase .lab{font-size:10.5px;color:var(--fa);margin-top:5px;text-transform:uppercase;letter-spacing:.05em}
+.phase.on .lab{color:var(--ac2)}.phase.done .lab{color:var(--tx2)}
+.view{flex:1;min-height:0;overflow-y:auto;padding:16px 20px}
+.chip{display:inline-flex;gap:5px;align-items:center;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px}
+.P1{color:var(--critical)}.P2{color:var(--high)}.P3{color:var(--medium)}.P4{color:var(--low)}.P5{color:var(--info)}
+.tag{font-size:10px;font-weight:700;padding:1px 7px;border-radius:4px;color:#06080C}
+.bgP1{background:var(--critical)}.bgP2{background:var(--high)}.bgP3{background:var(--medium)}.bgP4{background:var(--low)}.bgP5{background:var(--info)}
+.f{background:var(--s1);border:1px solid var(--bd);border-left-width:3px;border-radius:8px;padding:12px 14px;margin:0 0 10px}
+.f h3{margin:0 0 5px;font-size:13.5px}.f .m{color:var(--mu);font-size:12px;margin:2px 0}
+.f pre{background:var(--s0);border:1px solid var(--bd);border-radius:6px;padding:8px;margin:7px 0 0;white-space:pre-wrap;word-break:break-all;font-family:var(--fm);font-size:11.5px}
+.ev{display:grid;grid-template-columns:18px 1fr;gap:9px;padding:6px 2px;border-bottom:1px solid var(--bd);animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}}
+.ev .d{width:7px;height:7px;border-radius:50%;margin-top:6px;background:var(--mu)}
+.ev.finding .d{background:var(--critical)}.ev.recon .d{background:var(--low)}.ev.phase .d{background:var(--ac)}
+.ev .m{font-size:12.5px}.ev.phase .m{font-weight:600;color:var(--ac2);text-transform:uppercase;letter-spacing:.04em;font-size:11px}
+.ev .mu{font-family:var(--fm);font-size:11px}
+.stat{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:11px 13px;margin-bottom:8px}
+.stat .n{font-size:22px;font-weight:700}.stat .l{font-size:11px;color:var(--mu)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--bd)}th{color:var(--mu);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.sevrow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12.5px}
+.posture{font-size:26px;font-weight:700;margin:4px 0}
+.empty{color:var(--mu);padding:30px 0;text-align:center}
+svg.graph{width:100%;height:auto;background:var(--s0);border:1px solid var(--bd);border-radius:8px}
+.gn rect{rx:7}.gn text{font-size:11px;fill:var(--tx2)}
+.intel h2{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin:16px 14px 8px}
+.conns{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:14px}
+.card .ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-weight:700;color:#06080C;margin-bottom:9px}
+.card h3{margin:0 0 3px;font-size:14px}.card p{margin:0 0 11px;color:var(--mu);font-size:12px;min-height:32px}
+.card .cbtn{border:1px solid var(--bd2);background:var(--s2);color:var(--tx);border-radius:7px;padding:6px 12px;font-weight:500;font-size:12.5px}
+.card .cbtn:hover{border-color:var(--ac);color:var(--ac2)}
+.badge{float:right;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--live);background:rgba(79,178,134,.12);border:1px solid rgba(79,178,134,.3);border-radius:5px;padding:1px 6px}
+.scrim{position:fixed;inset:0;background:rgba(5,7,11,.72);display:none;align-items:center;justify-content:center;z-index:40;padding:20px}
+.scrim.on{display:flex}
+.modal{background:var(--s1);border:1px solid var(--bd2);border-radius:12px;max-width:600px;width:100%;max-height:86vh;overflow:auto;padding:20px}
+.modal h3{margin:0 0 6px}.modal p{color:var(--mu);font-size:12.5px}
+.modal pre{background:var(--s0);border:1px solid var(--bd);border-radius:7px;padding:11px;font-family:var(--fm);font-size:11.5px;white-space:pre-wrap;word-break:break-all;position:relative}
+.modal .x{float:right;color:var(--mu);font-size:18px;line-height:1}
+.copy{font-size:11px;border:1px solid var(--bd2);border-radius:6px;padding:3px 9px;color:var(--ac2);margin:6px 0}
+</style></head>
+<body><div class="app">
+ <nav class="rail">
+  <div class="brand"><span class="lg"></span>Harbor Console</div>
+  <div class="railpad">
+   <input id="t" type="text" placeholder="example.com · *.example.com · URL · IP · CIDR">
+   <button class="btn" id="go">Hunt</button>
+   <label class="ck"><input id="auth" type="checkbox"> I am authorized to test this target</label>
+  </div>
+  <div class="navgrp">Views</div>
+  <div id="navbox"></div>
+  <div class="navgrp">Scope</div>
+  <div class="railpad mu mono" id="scopebox" style="font-size:11px">no scan yet</div>
+ </nav>
+ <main class="canvas">
+  <div class="hd"><h1 id="viewTitle">Live run</h1><span class="chip mono mu" id="status">idle</span></div>
+  <div class="phases" id="phases"></div>
+  <div class="view" id="view"><div class="empty">Enter a target and press Hunt to begin.</div></div>
+ </main>
+ <aside class="intel">
+  <h2>Risk posture</h2>
+  <div class="railpad"><div class="posture" id="posture">—</div><div class="mu" id="postureSub">awaiting scan</div></div>
+  <h2>Severity</h2>
+  <div class="railpad" id="sevGrid"></div>
+  <h2>Coverage</h2>
+  <div class="railpad mu" id="cov" style="font-size:12px">—</div>
+ </aside>
+</div>
+<div class="scrim" id="scrim"><div class="modal" id="modal"></div></div>
+<input type="file" id="fileIn" style="display:none">
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML};
+const PHASES=["recon","crawl","scan","report"];
+const VIEWS=[
+ ["live","Live run",'<path d="M4 12h4l2-6 4 12 2-6h4"/>'],
+ ["graph","Attack graph",'<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M8 7l8 4M8 17l8-4"/>'],
+ ["surface","Attack surface",'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/><path d="M12 3v6M3 12h6"/>'],
+ ["findings","Findings",'<path d="M4 5h16M4 12h16M4 19h10"/>'],
+ ["remediation","Remediation",'<path d="M9 11l3 3 8-8M4 12a8 8 0 108-8"/>'],
+ ["report","Report",'<path d="M7 3h7l5 5v13H7zM14 3v5h5"/>'],
+ ["overview","Overview",'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/>'],
+ ["connectors","Connectors",'<path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M4 7h16v4a4 4 0 01-4 4H8a4 4 0 01-4-4zM12 15v4"/>']
+];
+let V="live", events=[], report=null, phaseState={active:null,done:new Set()};
+
+function renderNav(){
+ const n=report?report.findings.length:0;
+ $("#navbox").innerHTML=VIEWS.map(([v,lab,p])=>{
+  const ct=(v==="findings"&&n)?`<span class="ct">${n}</span>`:"";
+  return `<button class="nav ${v===V?'on':''}" data-v="${v}"><svg viewBox="0 0 24 24">${p}</svg><span>${lab}</span>${ct}</button>`;
+ }).join("");
+ document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{V=b.dataset.v;renderNav();renderView()});
+}
+function renderPhases(){
+ $("#phases").innerHTML=PHASES.map(p=>{
+  let c='phase';if(phaseState.done.has(p))c+=' done';if(p===phaseState.active)c+=' on';
+  return `<div class="${c}"><div class="seg"><i></i></div><div class="lab">${p}</div></div>`;
+ }).join("");
+}
+function sevColorVar(l){return`var(--${{P1:'critical',P2:'high',P3:'medium',P4:'low',P5:'info'}[l]||'info'})`}
+
+function renderView(){
+ $("#viewTitle").textContent=(VIEWS.find(v=>v[0]===V)||[])[1]||"";
+ const v=$("#view");
+ if(V==="live")return renderLive(v);
+ if(V==="connectors")return renderConnectors(v);
+ if(!report){v.innerHTML='<div class="empty">Run a scan to populate this view.</div>';return}
+ if(V==="findings")return renderFindings(v,report.findings);
+ if(V==="remediation")return renderFindings(v,report.findings,true);
+ if(V==="surface")return renderSurface(v);
+ if(V==="graph")return renderGraph(v);
+ if(V==="report")return renderReport(v);
+ if(V==="overview")return renderOverview(v);
+}
+function renderLive(v){
+ if(!events.length){v.innerHTML='<div class="empty">Live feed will stream here.</div>';return}
+ v.innerHTML=events.map(e=>`<div class="ev ${e.kind}"><div class="d"></div><div><div class="m">${esc(e.msg)}</div><div class="mu">${e.kind}</div></div></div>`).join("");
+ v.scrollTop=v.scrollHeight;
+}
+function fcard(f,remediation){
+ const extra=remediation
+  ? `<div class="m"><b>Fix:</b> ${esc(f.remediation)}</div>`
+  : (f.evidence?`<div class="m">${esc(f.evidence)}</div>`:'')+(f.request?`<pre>${esc(f.request)}</pre>`:'');
+ return `<div class="f" style="border-left-color:${sevColorVar(f.priority_label)}">
+  <h3><span class="tag bg${f.priority_label}">${f.priority_label}</span> ${esc(f.title)}</h3>
+  <div class="m mono">${esc(f.asset.url||f.asset.host)}</div>
+  <div class="m">${esc(f.vrt_chain)} · ${f.confidence}</div>${extra}</div>`;
+}
+function renderFindings(v,list,rem){
+ if(!list.length){v.innerHTML='<div class="empty">No in-scope P1–P4 findings.</div>';return}
+ v.innerHTML=list.map(f=>fcard(f,rem)).join("");
+}
+function renderSurface(v){
+ const s=report.attack_surface||{};
+ const hosts=(s.hosts||[]).map(h=>`<tr><td class="mono">${esc(h.host)}</td><td class="mono">${esc((h.ips||[]).join(', '))}</td><td class="mono mu">${esc(h.ptr||'')}</td></tr>`).join('');
+ const eps=(s.endpoints||[]).map(e=>`<tr><td class="mono">${esc(e.url)}</td><td>${e.status}</td><td class="mono mu">${esc((e.params||[]).join(', '))}</td></tr>`).join('');
+ v.innerHTML=`<h3>Hosts</h3><table><tr><th>Host</th><th>IP</th><th>PTR</th></tr>${hosts||'<tr><td class=mu>none</td></tr>'}</table>
+  <h3 style="margin-top:18px">Parameters</h3><div class="mono mu">${esc((s.parameters||[]).join('  ·  '))||'none'}</div>
+  <h3 style="margin-top:18px">Servers</h3><div class="mono mu">${esc((s.servers||[]).join(', '))||'unknown'}</div>
+  <h3 style="margin-top:18px">Endpoints (${(s.endpoints||[]).length})</h3><table><tr><th>URL</th><th>Status</th><th>Params</th></tr>${eps}</table>`;
+}
+function renderGraph(v){
+ const g=report.attack_graph||{nodes:[],edges:[]};
+ if(!g.nodes.length){v.innerHTML='<div class="empty">No graph.</div>';return}
+ const order=["scope","host","ip","service","endpoint","finding"];
+ const cols={};order.forEach((o,i)=>cols[o]=i);
+ const byType={};g.nodes.forEach(n=>{(byType[n.type]=byType[n.type]||[]).push(n)});
+ const colW=200,rowH=34,pad=20;
+ const pos={};let maxRows=0;
+ order.forEach((t,ci)=>{(byType[t]||[]).forEach((n,ri)=>{pos[n.id]={x:pad+ci*colW,y:pad+ri*rowH};});maxRows=Math.max(maxRows,(byType[t]||[]).length)});
+ const W=pad*2+colW*(order.length-1)+150,H=pad*2+maxRows*rowH;
+ const edges=g.edges.map(e=>{const a=pos[e.from],b=pos[e.to];if(!a||!b)return'';return`<line x1="${a.x+140}" y1="${a.y+10}" x2="${b.x}" y2="${b.y+10}" stroke="var(--bd2)"/>`}).join('');
+ const nodes=g.nodes.map(n=>{const p=pos[n.id];const fill=n.type==='finding'?'var(--critical)':'var(--s2)';const col=n.type==='finding'?'#06080C':'var(--tx2)';
+  return `<g class="gn"><rect x="${p.x}" y="${p.y}" width="140" height="20" rx="6" fill="${fill}" stroke="var(--bd)"/><text x="${p.x+7}" y="${p.y+14}" fill="${col}">${esc((n.label||'').slice(0,22))}</text></g>`}).join('');
+ v.innerHTML=`<svg class="graph" viewBox="0 0 ${W} ${H}">${edges}${nodes}</svg><div class="mu" style="margin-top:8px;font-size:12px">scope → host → ip → service → endpoint → finding</div>`;
+}
+function renderReport(v){
+ const c=report.stats.counts;
+ v.innerHTML=`<div class="f"><h3>Executive summary</h3>
+  <div class="m">${report.stats.total} in-scope findings across ${report.stats.pages_crawled} crawled endpoints in ${report.duration_seconds}s.</div>
+  <div class="m">Breakdown: ${['P1','P2','P3','P4'].map(k=>`${k} ${c[k]||0}`).join(' · ')}</div>
+  <div class="m mono">targets: ${esc((report.targets||[]).join(', '))}</div></div>`+
+  report.findings.map(f=>`<div class="f" style="border-left-color:${sevColorVar(f.priority_label)}">
+   <h3><span class="tag bg${f.priority_label}">${f.priority_label}</span> ${esc(f.title)}</h3>
+   <div class="m"><b>VRT:</b> ${esc(f.vrt_chain)}</div>
+   <div class="m"><b>Bug URL:</b> <span class="mono">${esc(f.asset.url||f.asset.host)}</span></div>
+   <div class="m">${esc(f.description)}</div>
+   <div class="m"><b>Impact:</b> ${esc(f.business_impact)}</div>
+   <pre>${esc((f.steps||[]).join('\n'))}</pre>
+   <div class="m"><b>Fix:</b> ${esc(f.remediation)}</div></div>`).join("");
+}
+function renderOverview(v){
+ const c=report.stats.counts;
+ v.innerHTML=`<div class="grid">${['P1','P2','P3','P4'].map(k=>`<div class="stat"><div class="n ${k}">${c[k]||0}</div><div class="l">${k}</div></div>`).join('')}</div>
+  <div class="grid"><div class="stat"><div class="n">${report.stats.pages_crawled}</div><div class="l">endpoints</div></div>
+   <div class="stat"><div class="n">${(report.attack_surface.parameters||[]).length}</div><div class="l">parameters</div></div>
+   <div class="stat"><div class="n">${report.hosts.length}</div><div class="l">hosts</div></div>
+   <div class="stat"><div class="n">${report.duration_seconds}s</div><div class="l">duration</div></div></div>
+  <div class="f"><h3>Modules run</h3><div class="m mono">${esc((report.stats.modules_run||[]).join(', '))}</div></div>`;
+}
+const CONNECTORS=[
+ {id:"claude",name:"Claude",color:"#8E6BE0",ini:"AI",tag:"AI-assisted",
+  desc:"Drive prowlscanner from Claude (Desktop or Code) over MCP for AI-assisted pentesting.",btn:"Connect"},
+ {id:"mcp",name:"Any MCP client",color:"#6E9BF5",ini:"M",tag:"AI-assisted",
+  desc:"Cursor, Cline, Continue or any model/agent that speaks MCP can connect the same way.",btn:"Setup"},
+ {id:"postman",name:"Postman",color:"#E39A58",ini:"P",tag:"import",
+  desc:"Import a Postman collection to seed the scan with its request URLs.",btn:"Import"},
+ {id:"burp",name:"Burp Suite",color:"#E26D63",ini:"B",tag:"import",
+  desc:"Import a Burp Suite items export (XML) to seed targets from your proxy history.",btn:"Import"},
+ {id:"caido",name:"Caido",color:"#4FB286",ini:"C",tag:"import",
+  desc:"Import a Caido export (URL list / HTTP history) to seed targets.",btn:"Import"}
+];
+const MCP_CMD="claude mcp add prowlscanner -- prowlscanner mcp";
+const MCP_JSON=JSON.stringify({mcpServers:{prowlscanner:{command:"prowlscanner",args:["mcp"]}}},null,2);
+let pendingImport=null;
+
+function renderConnectors(v){
+ v.innerHTML=`<p class="mu" style="margin-top:0">Connect AI assistants and testing tools. prowlscanner exposes a Model Context Protocol (MCP) server so any MCP-capable model can run scans and read findings, and it imports targets from the tools you already use.</p>
+ <div class="conns">`+CONNECTORS.map(c=>`<div class="card"><span class="badge">${c.tag}</span>
+  <div class="ico" style="background:${c.color}">${c.ini}</div>
+  <h3>${c.name}</h3><p>${c.desc}</p>
+  <button class="cbtn" data-c="${c.id}">${c.btn}</button></div>`).join("")+`</div>`;
+ v.querySelectorAll('.cbtn').forEach(b=>b.onclick=()=>onConnector(b.dataset.c));
+}
+function onConnector(id){
+ if(id==="claude"||id==="mcp"){
+  openModal(`<span class="x" onclick="closeModal()">×</span><h3>Connect ${id==="claude"?"Claude":"an MCP client"} — AI-assisted pentesting</h3>
+   <p>prowlscanner ships an MCP server (<span class="mono">prowlscanner mcp</span>) exposing tools <span class="mono">prowl_scan</span>, <span class="mono">prowl_vrt</span> and <span class="mono">prowl_modules</span>. The assistant can then run authorized scans and reason over the findings.</p>
+   <p><b>Claude Code</b></p><pre id="m1">${esc(MCP_CMD)}</pre><button class="copy" data-cp="m1">Copy</button>
+   <p><b>Claude Desktop / other MCP clients</b> — add to the client's MCP config:</p><pre id="m2">${esc(MCP_JSON)}</pre><button class="copy" data-cp="m2">Copy</button>
+   <p class="mu">Requires prowlscanner installed on PATH (<span class="mono">pip install prowlscanner</span>). Only scan targets you are authorized to test — the assistant must pass authorize=true.</p>`);
+  document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText($('#'+b.dataset.cp).textContent);b.textContent="Copied"});
+ }else{
+  pendingImport=id;$("#fileIn").value="";$("#fileIn").click();
+ }
+}
+function openModal(html){$("#modal").innerHTML=html;$("#scrim").classList.add('on')}
+function closeModal(){$("#scrim").classList.remove('on')}
+$("#scrim").onclick=e=>{if(e.target.id==="scrim")closeModal()};
+$("#fileIn").onchange=e=>{
+ const f=e.target.files[0];if(!f)return;const r=new FileReader();
+ r.onload=()=>{fetch('/api/import',{method:'POST',body:r.result}).then(x=>x.json()).then(d=>{
+   if(d.error){alert('Import failed: '+d.error);return}
+   if(d.primary){$("#t").value=d.primary}
+   openModal(`<span class="x" onclick="closeModal()">×</span><h3>Imported from ${pendingImport}</h3>
+    <p>${d.count} target(s) parsed (${d.kind}). The primary host has been placed in the target field — review scope, confirm authorization, and press Hunt.</p>
+    <pre>${esc((d.urls||[]).slice(0,25).join('\n'))}</pre>`);
+ }).catch(err=>alert('Import failed: '+err))};
+ r.readAsText(f);
+};
+
+function renderIntel(){
+ const c=report?report.stats.counts:{};
+ const worst=report&&report.findings.length?report.findings[0].priority_label:null;
+ const postureTxt={P1:'Critical',P2:'Severe',P3:'Moderate',P4:'Low'}[worst]||(report?'Clean':'—');
+ $("#posture").textContent=postureTxt;$("#posture").style.color=worst?sevColorVar(worst):'var(--tx)';
+ $("#postureSub").textContent=report?`${report.stats.total} findings`:'awaiting scan';
+ $("#sevGrid").innerHTML=['P1','P2','P3','P4','P5'].map(k=>`<div class="sevrow"><span class="${k}">${k}</span><span class="mono">${(c[k]||0)}</span></div>`).join('');
+ $("#cov").innerHTML=report?`${(report.stats.modules_run||[]).length} modules · ${report.stats.pages_crawled} endpoints`:'—';
+}
+function setScope(t){$("#scopebox").textContent=t}
+
+$("#go").onclick=()=>{
+ const t=$("#t").value.trim();if(!t)return;
+ if(!$("#auth").checked){alert('Confirm authorization first.');return}
+ events=[];report=null;phaseState={active:null,done:new Set()};V="live";setScope(t);
+ $("#status").textContent="running";$("#go").disabled=true;
+ renderNav();renderPhases();renderView();renderIntel();
+ const es=new EventSource('/api/scan?target='+encodeURIComponent(t)+'&authorized=1');
+ es.addEventListener('phase',e=>{const p=e.data;PHASES.forEach(x=>{if(PHASES.indexOf(x)<PHASES.indexOf(p))phaseState.done.add(x)});phaseState.active=p;renderPhases();events.push({kind:'phase',msg:p});if(V==='live')renderLive($("#view"))});
+ ['recon','crawl','module','info','error'].forEach(k=>es.addEventListener(k,e=>{events.push({kind:k,msg:e.data});if(V==='live')renderLive($("#view"))}));
+ es.addEventListener('finding',e=>{events.push({kind:'finding',msg:e.data});if(V==='live')renderLive($("#view"))});
+ es.addEventListener('report',e=>{report=JSON.parse(e.data);renderNav();renderIntel();if(V==='live'){V='overview';renderNav()}renderView()});
+ es.addEventListener('done',()=>{es.close();$("#go").disabled=false;$("#status").textContent="complete";phaseState.done=new Set(PHASES);phaseState.active=null;renderPhases()});
+ es.onerror=()=>{es.close();$("#go").disabled=false;$("#status").textContent="stopped"};
+};
+renderNav();renderPhases();renderIntel();
+</script></body></html>

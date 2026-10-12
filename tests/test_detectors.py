@@ -2,7 +2,9 @@ from prowlscanner.modules.admin_portal import admin_fingerprint
 from prowlscanner.modules.clickjacking import framing_allowed
 import re
 from prowlscanner.modules.jwt import crack_hs, parse_jwt
+from prowlscanner.modules.sqli_blind import is_time_based
 from prowlscanner.modules.ssrf import ssrf_signature
+from prowlscanner.modules.xxe import xxe_leak
 from prowlscanner.modules.subdomain_takeover import fingerprint_takeover
 from prowlscanner.modules.verbose_error import detect_verbose_error
 from prowlscanner.modules.cookie_flags import missing_flags
@@ -76,6 +78,17 @@ def test_verbose_error_detection():
 def test_admin_fingerprint():
     assert admin_fingerprint("Powered by WordPress wp-submit", re.compile(r"wp-submit|WordPress", re.I))
     assert not admin_fingerprint("nothing", re.compile(r"phpMyAdmin"))
+
+
+def test_time_based_decision():
+    assert is_time_based(0.2, 5.1)
+    assert not is_time_based(0.2, 0.3)
+    assert not is_time_based(5.0, 5.2)
+
+
+def test_xxe_leak():
+    assert xxe_leak("root:x:0:0:root:/root:/bin/bash")
+    assert not xxe_leak("<data>ok</data>")
 
 
 def test_jwt_parse_and_crack():

@@ -14,6 +14,17 @@ _ENTRIES: dict[str, dict[str, str]] = {
             "personal data, leading to severe financial, legal and reputational damage for the business."
         ),
     },
+    "server_side_injection/xml_external_entity_injection_xxe": {
+        "description": (
+            "The application parses attacker-supplied XML with external entity resolution enabled. An attacker can "
+            "define an external entity that references a local file or internal URL, and have its contents returned "
+            "or exfiltrated."
+        ),
+        "impact": (
+            "XXE discloses local files and internal services, can trigger SSRF and denial of service, and often "
+            "leads to credential theft and deeper compromise."
+        ),
+    },
     "server_side_injection/file_inclusion/local": {
         "description": (
             "A request parameter is used to build a filesystem path without validation. By supplying directory "

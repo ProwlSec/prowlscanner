@@ -5,11 +5,20 @@ import json
 import queue
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from importlib import resources
 from urllib.parse import parse_qs, urlparse
 
+
+def _page() -> str:
+    try:
+        return resources.files("prowlscanner").joinpath("web/console.html").read_text(encoding="utf-8")
+    except (FileNotFoundError, ModuleNotFoundError, OSError):
+        return _PAGE
+
 from .config import ScanConfig
+from .connectors import importers
 from .engine import Engine
-from .report import render_json
+from .report.json_report import build as _build_report
 
 _PAGE = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -97,10 +106,29 @@ class _Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/":
-            self._send(200, _PAGE.encode("utf-8"), "text/html; charset=utf-8")
+            self._send(200, _page().encode("utf-8"), "text/html; charset=utf-8")
             return
         if parsed.path == "/api/scan":
             self._scan(parse_qs(parsed.query))
+            return
+        self._send(404, b"not found", "text/plain")
+
+    def do_POST(self) -> None:
+        parsed = urlparse(self.path)
+        if parsed.path == "/api/import":
+            length = int(self.headers.get("Content-Length", 0) or 0)
+            raw = self.rfile.read(length).decode("utf-8", "replace") if length else ""
+            try:
+                kind, urls = importers.detect_and_parse(raw)
+            except Exception as exc:
+                self._send(400, json.dumps({"error": str(exc)}).encode(), "application/json")
+                return
+            primary = ""
+            if urls:
+                first = urls[0]
+                primary = urlparse(first).hostname or first.split("/")[0] if "://" in first else first
+            body = json.dumps({"kind": kind, "count": len(urls), "urls": urls[:200], "primary": primary})
+            self._send(200, body.encode(), "application/json")
             return
         self._send(404, b"not found", "text/plain")
 
@@ -137,7 +165,7 @@ class _Handler(BaseHTTPRequestHandler):
                 seeds = [target] if "://" in target else []
                 engine = Engine(config, seed_urls=seeds, event=emit)
                 report = asyncio.run(engine.run())
-                events.put(("__report__", render_json(report)))
+                events.put(("__report__", json.dumps(_build_report(report))))
             except Exception as exc:
                 events.put(("error", f"scan failed: {exc}"))
             finally:
