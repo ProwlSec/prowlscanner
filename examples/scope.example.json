@@ -1,0 +1,14 @@
+{
+  "in_scope": ["*.example.com", "example.com"],
+  "out_of_scope": ["blog.example.com", "status.example.com"],
+  "not_applicable": [
+    "server_security_misconfiguration/mail_server_misconfiguration",
+    "sensitive_data_exposure/internal_ip_disclosure"
+  ],
+  "bands": [1, 2, 3, 4],
+  "authorized": false,
+  "max_depth": 2,
+  "max_urls": 300,
+  "rate": 12.0,
+  "verify_tls": true
+}

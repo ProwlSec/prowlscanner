@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "prowlscanner"
+version = "0.1.0"
+description = "Authorized web vulnerability hunter — findings mapped to the Bugcrowd Vulnerability Rating Taxonomy (P1–P4)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [{ name = "ProwlSec" }]
+keywords = ["security", "bugbounty", "pentest", "vulnerability-scanner", "owasp", "vrt", "appsec"]
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: Information Technology",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Security",
+]
+dependencies = ["httpx>=0.24"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-asyncio>=0.21"]
+
+[project.scripts]
+prowlscanner = "prowlscanner.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/ProwlSec/prowlscanner"
+Repository = "https://github.com/ProwlSec/prowlscanner"
+Issues = "https://github.com/ProwlSec/prowlscanner/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/prowlscanner"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/prowlscanner", "README.md", "LICENSE"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
